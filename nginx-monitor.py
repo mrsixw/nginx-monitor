@@ -32,15 +32,15 @@ if __name__ == '__main__':
 
     if cumulative_percent > 80:
         # Take action at the 80% mark - we want to schedule an nginx restart
-        pass
+        action_taken = 'Scheduling at for restart'
     else:
-        # do nothing for the moment
-        pass
+
+        action_taken = 'No action taken'
 
     # Send ourselves an email - you will need an email template in cwd
     with open('mail_headers.txt') as fp:
          headers = Parser().parse(fp)
-    msg = MIMEText(" ")
+    msg = MIMEText(action_taken)
     msg['To'] = headers['To']
     msg['From'] = headers['From']
 
