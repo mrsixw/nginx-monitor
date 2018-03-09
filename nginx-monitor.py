@@ -49,22 +49,52 @@ if __name__ == '__main__':
                 action_taken += "\n Job not scheduled - scheduling"
 
 
-                tomorrow = datetime.now() + timedelta(days=1)
+                today_weekday = datetime.now().weekday()
+                if today_weekday > 3:
+                    delta_day = 1 + abs(today_weekday - 6)
+                else:
+                    delta_day = 1
+                print (delta_day)
+                tomorrow = datetime.now() + timedelta(days=delta_day)
 
                 print (tomorrow.date())
 
-                timespec = "{}{}{}0930".format(tomorrow.date().year,
+                timespec = "{}{:0>2}{:0>2}0930".format(tomorrow.date().year,
                                                tomorrow.date().month,
                                                tomorrow.date().day)
 
-                sched_proc = subprocess.run(['echo','"systemctl restart nginx"','|','at','-q','s','-mv','-t',timespec],
-                                             stdout=subprocess.PIPE)
+                sched_proc = subprocess.run(['at',
+                                             '-q',
+                                             's',
+                                             '-f',
+                                             './restart_nginx.job',
+                                             '-mv',
+                                             '-t',
+                                             timespec],
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.PIPE)
+
+                print (" ".join(sched_proc.args))
+                print (sched_proc.returncode)
+                print (sched_proc.stdout.decode("utf-8"))
+
+                if sched_proc.returncode == 0:
+                    action_taken += "\n Job scheduled in the at s queue for {}".format(timespec)
+                else:
+                    action_taken += "\n Job could not be scheduled for {}".format(timespec)
+                action_taken += "\n command {}".format(" ".join(sched_proc.args))
+                action_taken += "\n return code {}".format(sched_proc.returncode)
+                action_taken += "\n output {}".format(sched_proc.stdout.decode("utf-8"))
+                action_taken += "\n error {}".format(sched_proc.stderr.decode("utf-8"))
+
+
+
             else:
                 print("Job already scheduled")
                 action_taken += "\n Job already scheduled in the at s queue - abort"
 
         else:
-            action_taken += "\nReturn code from atq ({}) was {}".format(at_query.cmd,
+            action_taken += "\nReturn code from atq ({}) was {}".format(at_query.args,
                                                                         at_query.returncode)
 
 
