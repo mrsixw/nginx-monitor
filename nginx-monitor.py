@@ -32,8 +32,8 @@ if __name__ == '__main__':
 
     print ('Cumulative nginx memory use = ', cumulative_percent)
 
-    if cumulative_percent > 0:
-        # Take action at the 80% mark - we want to schedule an nginx restart
+    if cumulative_percent > 75:
+        # Take action at the 75% mark - we want to schedule an nginx restart
         action_taken = 'Scheduling at for restart'
 
         # Check if we aleready have a restart pending
@@ -101,15 +101,17 @@ if __name__ == '__main__':
     else:
         action_taken = 'No action taken'
 
-    # Send ourselves an email - you will need an email template in cwd
-    with open('mail_headers.txt') as fp:
-         headers = Parser().parse(fp)
-    msg = MIMEText(action_taken)
-    msg['To'] = headers['To']
-    msg['From'] = headers['From']
+    # Send ourselves an email - you will need an email template in cwd, but only do this about 66% memory usage,
+    # to cut the noise
+    if cumulative_percent > 66:
+        with open('mail_headers.txt') as fp:
+             headers = Parser().parse(fp)
+        msg = MIMEText(action_taken)
+        msg['To'] = headers['To']
+        msg['From'] = headers['From']
 
-    msg['Subject'] = headers['Subject'].format(cumulative_percent)
+        msg['Subject'] = headers['Subject'].format(cumulative_percent)
 
-    s = smtplib.SMTP('localhost')
-    s.send_message(msg)
-    s.quit()
+        s = smtplib.SMTP('localhost')
+        s.send_message(msg)
+        s.quit()
